@@ -1,6 +1,4 @@
 import csv
-import random
-import string
 import requests
 from datetime import datetime, timedelta
 import pandas as pd
@@ -12,7 +10,16 @@ USER_API_URL = 'https://example.com/api/users'  # Replace with your API endpoint
 USE_SOURCE = 'csv'  # 'csv' or 'api'
 CSV_FILE_PATH = 'users.csv'
 COUPON_EXPIRY_DAYS = 5
-COUPON_PREFIX = "SAVE"
+
+# ========== PRE-DEFINED COUPON CODES ==========
+coupon_codes = [
+    "SAVE-XA1234",
+    "SAVE-ZB5678",
+    "SAVE-QT9012",
+    "SAVE-UV3456",
+    "SAVE-MN7890",
+    # Add as many as needed
+]
 
 # ========== FUNCTIONS ==========
 
@@ -31,10 +38,6 @@ def get_discount(days):
     elif 151 <= days <= 175: return 90
     elif 176 <= days <= 365: return 95
     return 0
-
-def generate_coupon_code(length=6):
-    chars = string.ascii_uppercase + string.digits
-    return f"{COUPON_PREFIX}-" + ''.join(random.choices(chars, k=length))
 
 def send_coupon_via_sensy(user, discount, coupon_code, expiry):
     payload = {
@@ -111,7 +114,12 @@ if __name__ == "__main__":
             if discount == 0:
                 continue
 
-            coupon_code = generate_coupon_code()
+            # Coupon exhaustion check
+            if not coupon_codes:
+                print(f"⚠️ No coupons left for {user['name']} ({user['phone']}) — Skipping")
+                continue
+
+            coupon_code = coupon_codes.pop(0)
             expiry_date = datetime.now() + timedelta(days=COUPON_EXPIRY_DAYS)
 
             status_code, result = send_coupon_via_sensy(user, discount, coupon_code, expiry_date)
